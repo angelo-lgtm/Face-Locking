@@ -5,6 +5,7 @@
 
 Needs the Part 1 enrollment database and models; runs on the CPU only.
 """
+import utils.session
 import time
 from contextlib import closing, nullcontext
 
@@ -13,7 +14,7 @@ import cv2
 from ..config import LOGS
 from ..database import FaceDatabase
 from ..event_log import TrackingLog
-from ..workflow import camera, exiting, models, parser, read_frame, run
+from ..workflow import camera, exiting, models, parser, read_frame, run, show
 from . import overlay
 from .detectors import make_person_detector
 from .pipeline import ArcFaceVerifier, NeedleAdapter, PersonLockPipeline, tracker_config_from_args
@@ -131,7 +132,7 @@ def session(args, cli, log):
                                          f'ArcFace calls: {pipeline.verifier.calls}',
                                          f'Half-life {args.half_life:g}s | confirm {args.confirm:g} | '
                                          f'unknown {args.unknown:g}', 'Q / Escape: quit'])
-                    cv2.imshow(window, view)
+                    show(window, view, fullscreen=not args.windowed)
                     if exiting(window, cv2.waitKey(1) & 0xff):
                         break
                 if args.max_frames and frames >= args.max_frames:

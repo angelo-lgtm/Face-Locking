@@ -6,6 +6,9 @@ from .identity import IdentityState
 
 COLORS = {IdentityState.CONFIRMED: (0, 200, 0), IdentityState.TEMPORARY: (0, 150, 255),
           IdentityState.UNKNOWN: (160, 160, 160)}
+# Unrecognised people are drawn as thin grey boxes; the text below keeps that
+# visible on the frame instead of only in the side panel.
+STRANGER = (0, 140, 255)
 
 
 def _label(frame, text, x, y, color):
@@ -42,6 +45,12 @@ def draw(frame, tracker, estimate, aim, dead_zone=0.07, lines=()):
             cv2.rectangle(frame, (x1, y2 + 4), (x1 + bar, y2 + 10), color, -1)
         elif tr.other_name:
             _label(frame, tr.other_name, x1, y1 - 2, (200, 200, 200))
+        elif estimate.state != IdentityState.UNKNOWN:
+            # The target is locked to a different track, so this box cannot be it.
+            _label(frame, 'STRANGER', x1, y1 - 2, STRANGER)
+        else:
+            # Identity has expired: nothing in the frame is currently recognised.
+            _label(frame, 'UNKNOWN', x1, y1 - 2, color)
     if estimate.face_box is not None:
         x1, y1, x2, y2 = (int(v) for v in estimate.face_box)
         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 200, 0), 1, cv2.LINE_AA)
