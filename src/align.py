@@ -34,7 +34,7 @@ def align_face(frame, points):
 
 def main():
     from .landmarks import FaceDetector, draw_face
-    from .workflow import camera, exiting, parser, read_frame
+    from .workflow import camera, exiting, inset, parser, read_frame, show
 
     args = parser("Preview 5-point face alignment").parse_args()
     detector = FaceDetector(args.detector)
@@ -50,9 +50,9 @@ def main():
 
             if len(faces) == 1:
                 aligned = align_face(frame, faces[0].points)
-                cv2.imshow("Aligned Face 112x112", aligned)
+                inset(frame, aligned, "Aligned Face 112x112")
 
-            cv2.imshow(window, frame)
+            show(window, frame, fullscreen=not args.windowed)
 
             if exiting(window, cv2.waitKey(1) & 0xff):
                 break
