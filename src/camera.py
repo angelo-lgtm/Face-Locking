@@ -9,11 +9,21 @@ FRAME_HEIGHT = 480
 
 
 def main():
-    cap = cv2.VideoCapture(CAMERA_INDEX)
+    import argparse
+
+    from .workflow import show
+
+    cli = argparse.ArgumentParser(description=__doc__)
+    cli.add_argument("--camera", type=int, default=CAMERA_INDEX)
+    cli.add_argument("--windowed", action="store_true",
+                     help="Open in a resizable window instead of fullscreen")
+    args = cli.parse_args()
+
+    cap = cv2.VideoCapture(args.camera)
 
     if not cap.isOpened():
         raise RuntimeError(
-            f"Could not open camera index {CAMERA_INDEX}"
+            f"Could not open camera index {args.camera}"
         )
 
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH)
@@ -48,7 +58,7 @@ def main():
             2,
         )
 
-        cv2.imshow("Camera Test", frame)
+        show("Camera Test", frame, fullscreen=not args.windowed)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break

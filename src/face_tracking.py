@@ -12,7 +12,7 @@ from src.config import LOGS
 from src.event_log import TrackingLog
 from src.face_signals import FaceSignalExtractor
 from src.landmarks import draw_face
-from src.workflow import camera, exiting, models, parser, read_frame, run
+from src.workflow import camera, exiting, models, parser, read_frame, run, show
 
 
 class LockState(Enum):
@@ -311,7 +311,8 @@ def tracking_session(args, cli, log):
             cv2.rectangle(frame, (int(width * (0.5 - dz / 2)), int(height * (0.5 - dz / 2))),
                           (int(width * (0.5 + dz / 2)), int(height * (0.5 + dz / 2))),
                           (160, 160, 160), 1, cv2.LINE_AA)
-            cv2.imshow(window, status_panel(frame, tracker, position, face_state, blink_total, args))
+            show(window, status_panel(frame, tracker, position, face_state, blink_total, args),
+                 fullscreen=not args.windowed)
             if exiting(window, cv2.waitKey(1) & 0xff):
                 break
 

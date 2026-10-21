@@ -1,10 +1,10 @@
 import itertools
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 
-from src.person_tracking import detectors
+from src.person_tracking import detectors, overlay
 from src.person_tracking.assignment import linear_assignment
 from src.person_tracking.centering import CenteringController
 from src.person_tracking.face_body import associate_faces, body_from_face, face_body_score
@@ -450,6 +450,50 @@ class SimulationRegressionTests(unittest.TestCase):
         m = metrics.score(run)
         self.assertGreaterEqual(m['coverage_during_face_loss'], 0.9)
         self.assertEqual(m['wrong_hold_frames'], 0)
+
+
+class OverlayLabelTests(unittest.TestCase):
+    """Unrecognised boxes carry a text label, not only a grey outline."""
+
+    def setUp(self):
+        self.tracker = WholePersonTracker(TrackerConfig('Isaac', min_face_size=40))
+        self.t = 0.0
+        self.labels = []
+        patcher = patch('src.person_tracking.overlay._label',
+                        side_effect=lambda frame, text, x, y, color: self.labels.append(text))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def step(self, persons, faces=(), dt=1 / 15):
+        self.t += dt
+        return self.tracker.update(self.t, persons, list(faces), None,
+                                   recognize=lambda f: f.meta)
+
+    def labels_drawn(self, est):
+        overlay.draw(np.zeros((480, 640, 3), np.uint8), self.tracker, est, None)
+        return set(self.labels)
+
+    def test_stranger_is_labelled_while_the_target_is_locked(self):
+        persons = [person_box(300)]
+        est = None
+        for _ in range(10):
+            est = self.step(persons, [face_at(300)])
+        self.assertEqual(est.state, S.CONFIRMED)
+        for _ in range(8):                      # the second person must outlive min_hits
+            est = self.step(persons + [person_box(700)],
+                            [face_at(300), face_at(700, name='Unknown')])
+        self.assertIn('STRANGER', self.labels_drawn(est))
+
+    def test_expired_identity_is_labelled_unknown(self):
+        persons = [person_box(300)]
+        est = None
+        for _ in range(10):
+            est = self.step(persons, [face_at(300)])
+        self.assertEqual(est.state, S.CONFIRMED)
+        for _ in range(15 * 14):                # face gone: TEMPORARY decays to UNKNOWN
+            est = self.step(persons)
+        self.assertEqual(est.state, S.UNKNOWN)
+        self.assertIn('UNKNOWN', self.labels_drawn(est))
 
 
 class RecordTests(unittest.TestCase):

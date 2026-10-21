@@ -4,7 +4,7 @@ import cv2
 from .align import align_face
 from .database import FaceDatabase
 from .landmarks import draw_face
-from .workflow import camera, exiting, models, parser, read_frame, run
+from .workflow import camera, exiting, inset, models, parser, read_frame, run, show
 
 
 def main():
@@ -51,9 +51,9 @@ def main():
             cv2.putText(frame, f"{len(samples)}/{args.samples} | {quality}", (10, 25),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 255), 2)
             cv2.putText(frame, message, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            cv2.imshow(window, frame)
             if aligned is not None:
-                cv2.imshow("Aligned face", aligned)
+                inset(frame, aligned, "Aligned face")
+            show(window, frame, fullscreen=not args.windowed)
             key = cv2.waitKey(1) & 0xff
             if exiting(window, key):
                 print("Enrollment cancelled; database unchanged.")

@@ -11,6 +11,7 @@ from pathlib import Path
 import cv2
 
 from .. import overlay
+from ...workflow import show as show_frame
 from ..centering import CenteringController
 from ..tracker import TrackerConfig, WholePersonTracker
 from . import scenarios
@@ -18,7 +19,8 @@ from .sensors import SensorConfig, Sensors
 from .world import World
 
 
-def play(scenario, seed=0, show=False, save=None, sheet=None, detect_every=1, speed=1.0):
+def play(scenario, seed=0, show=False, save=None, sheet=None, detect_every=1, speed=1.0,
+         windowed=False):
     world = World(scenario, seed)
     sensors = Sensors(scenario, SensorConfig(detect_every=detect_every), seed)
     tracker = WholePersonTracker(TrackerConfig(scenario.target))
@@ -50,7 +52,8 @@ def play(scenario, seed=0, show=False, save=None, sheet=None, detect_every=1, sp
         if sheet and k % max(int(world.n_frames / 8), 1) == 0:
             snapshots.append(cv2.resize(view, None, fx=0.4, fy=0.4, interpolation=cv2.INTER_AREA))
         if show:
-            cv2.imshow('FaceX person-tracking simulation', cv2.resize(view, None, fx=0.7, fy=0.7))
+            display = view if windowed else cv2.resize(view, None, fx=0.7, fy=0.7)
+            show_frame('FaceX person-tracking simulation', display, fullscreen=not windowed)
             if cv2.waitKey(max(int(1000 / fps / speed), 1)) & 0xff in (ord('q'), 27):
                 break
     if writer is not None:
@@ -73,6 +76,8 @@ def main(argv=None):
     cli.add_argument('--sheet', help='Write a PNG contact sheet of key frames')
     cli.add_argument('--detect-every', type=int, default=1)
     cli.add_argument('--speed', type=float, default=1.0)
+    cli.add_argument('--windowed', action='store_true',
+                     help='Show the simulation in a resizable window instead of fullscreen')
     args = cli.parse_args(argv)
     if args.list:
         for name, make in scenarios.SCENARIOS.items():
@@ -80,7 +85,7 @@ def main(argv=None):
             print(f'{name:22s} {s.duration:4.0f}s  {s.description}')
         return
     play(scenarios.get(args.scenario), args.seed, args.show, args.save, args.sheet,
-         args.detect_every, args.speed)
+         args.detect_every, args.speed, args.windowed)
 
 
 if __name__ == '__main__':

@@ -188,7 +188,17 @@ class Haar5ptDetector:
 
         
 def main():
-    cap = cv2.VideoCapture(0)
+    import argparse
+
+    from .workflow import show
+
+    cli = argparse.ArgumentParser(description="Haar + MediaPipe 5-point preview")
+    cli.add_argument("--camera", type=int, default=0)
+    cli.add_argument("--windowed", action="store_true",
+                     help="Open in a resizable window instead of fullscreen")
+    args = cli.parse_args()
+
+    cap = cv2.VideoCapture(args.camera)
 
     if not cap.isOpened():
         raise RuntimeError("Could not open camera.")
@@ -226,10 +236,7 @@ def main():
                     -1,
                 )
 
-        cv2.imshow(
-            "Haar + 5 Point Detector",
-            frame,
-        )
+        show("Haar + 5 Point Detector", frame, fullscreen=not args.windowed)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break

@@ -5,6 +5,16 @@ CAMERA_INDEX = 0
 
 
 def main():
+    import argparse
+
+    from .workflow import show
+
+    cli = argparse.ArgumentParser(description=__doc__)
+    cli.add_argument("--camera", type=int, default=CAMERA_INDEX)
+    cli.add_argument("--windowed", action="store_true",
+                     help="Open in a resizable window instead of fullscreen")
+    args = cli.parse_args()
+
     detector_path = (
         cv2.data.haarcascades
         + "haarcascade_frontalface_default.xml"
@@ -17,7 +27,7 @@ def main():
             f"Could not load Haar detector: {detector_path}"
         )
 
-    cap = cv2.VideoCapture(CAMERA_INDEX)
+    cap = cv2.VideoCapture(args.camera)
 
     if not cap.isOpened():
         raise RuntimeError("Could not open camera.")
@@ -51,7 +61,7 @@ def main():
                 2,
             ) 
 
-        cv2.imshow("Face Detection", frame)
+        show("Face Detection", frame, fullscreen=not args.windowed)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break

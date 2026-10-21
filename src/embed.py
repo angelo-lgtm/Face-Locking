@@ -56,7 +56,7 @@ class ArcFace:
 
 def main():
     from .align import align_face
-    from .workflow import camera, exiting, models, parser, read_frame
+    from .workflow import camera, exiting, inset, models, parser, read_frame, show
     args = parser("Preview ArcFace embedding shape and L2 norm").parse_args()
     detector, embedder = models(args)
     window = "FaceX embedding"
@@ -69,9 +69,9 @@ def main():
                 aligned = align_face(frame, faces[0].points)
                 vector = embedder.embed(aligned)
                 message = f"Embedding: {vector.size} | L2 norm: {np.linalg.norm(vector):.4f}"
-                cv2.imshow("Aligned face", aligned)
+                inset(frame, aligned, "Aligned face")
             cv2.putText(frame, message, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-            cv2.imshow(window, frame)
+            show(window, frame, fullscreen=not args.windowed)
             if exiting(window, cv2.waitKey(1) & 0xff):
                 break
 
